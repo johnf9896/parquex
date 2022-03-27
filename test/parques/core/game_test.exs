@@ -1,6 +1,6 @@
 defmodule Parques.Core.GameTest do
   @moduledoc false
-  use ExUnit.Case, async: true
+  use Parques.Case, async: true
 
   alias Parques.Core.Game
 

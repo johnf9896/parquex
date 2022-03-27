@@ -44,7 +44,6 @@ defmodule Parques.MixProject do
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.17.5"},
-      {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.6"},
       {:esbuild, "~> 0.3", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 0.6"},
@@ -53,6 +52,9 @@ defmodule Parques.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:typed_struct, "~> 0.3.0", override: true},
+      # Testing
+      {:floki, ">= 0.30.0", only: :test},
+      {:ex_machina, "~> 2.7.0", only: :test},
       # Development tools
       {:mix_test_interactive, "~> 1.0", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 1.2", only: :test},
