@@ -1,5 +1,5 @@
 defmodule ParquesWeb.PageControllerTest do
-  use ParquesWeb.ConnCase
+  use ParquesWeb.ConnCase, async: true
 
   test "GET /", %{conn: conn} do
     conn = get(conn, "/")
