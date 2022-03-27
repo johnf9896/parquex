@@ -1,4 +1,7 @@
 defmodule ParquesWeb.Telemetry do
+  @moduledoc """
+  Telemetry metrics
+  """
   use Supervisor
   import Telemetry.Metrics
 
