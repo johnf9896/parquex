@@ -1,0 +1,21 @@
+{
+  "custom_stop_words": [
+    "typedstruct"
+  ],
+  "coverage_options": {
+    "treat_no_relevant_lines_as_covered": true,
+    "output_dir": "cover/",
+    "minimum_coverage": 90
+  },
+  "terminal_options": {
+    "file_column_width": 80
+  },
+  "skip_files": [
+    "lib/parques/application.ex",
+    "lib/parques_web.ex",
+    "lib/parques_web/telemetry.ex",
+    "lib/parques_web/router.ex",
+    "lib/parques_web/views/error_helpers.ex",
+    "test/support/channel_case.ex"
+  ]
+}

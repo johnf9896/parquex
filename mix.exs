@@ -10,7 +10,14 @@ defmodule Parques.MixProject do
       compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -50,7 +57,8 @@ defmodule Parques.MixProject do
       {:mix_test_interactive, "~> 1.0", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 1.2", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.0", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.14", only: :test}
     ]
   end
 
