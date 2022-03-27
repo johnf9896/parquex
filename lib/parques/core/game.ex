@@ -1,6 +1,6 @@
 defmodule Parques.Core.Game do
   @moduledoc """
-  A Game is the primary piece of data, representing a match of Parques.
+  A Game is the primary piece of data, representing a match of Parqués.
   """
   use TypedStruct
 
