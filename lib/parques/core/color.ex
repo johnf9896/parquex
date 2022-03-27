@@ -22,5 +22,5 @@ defmodule Parques.Core.Color do
     List.first(@colors -- taken)
   end
 
-  defguard is_color(color) when color in @colors
+  defguard is_color(term) when term in @colors
 end
