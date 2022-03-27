@@ -4,12 +4,18 @@ defmodule Parques.Core.Game do
   """
   use TypedStruct
 
+  alias Parques.Core.Color
   alias Parques.Core.Player
+
+  @max_players Color.count()
 
   typedstruct enforce: true do
     field :name, String.t(), default: "New game"
     field :players, [Player.t()], default: []
   end
+
+  @spec max_players :: pos_integer()
+  def max_players, do: @max_players
 
   @spec new(Enum.t()) :: t()
   def new(fields \\ []) do
