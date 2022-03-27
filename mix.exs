@@ -45,7 +45,9 @@ defmodule Parques.MixProject do
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:typed_struct, "~> 0.3.0"}
+      {:typed_struct, "~> 0.3.0", override: true},
+      {:mix_test_interactive, "~> 1.0", only: :dev, runtime: false},
+      {:ex_unit_notifier, "~> 1.2", only: :test}
     ]
   end
 
