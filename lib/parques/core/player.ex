@@ -20,6 +20,6 @@ defmodule Parques.Core.Player do
 
   @spec set_color(t(), Color.t()) :: t()
   def set_color(player, new_color) when is_color(new_color) do
-    %{player | color: new_color}
+    %__MODULE__{player | color: new_color}
   end
 end
