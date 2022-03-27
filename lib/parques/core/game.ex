@@ -9,8 +9,11 @@ defmodule Parques.Core.Game do
 
   @max_players Color.count()
 
+  @type state :: :created | :playing | :finished
+
   typedstruct enforce: true do
     field :name, String.t(), default: "New game"
+    field :state, state(), default: :created
     field :players, [Player.t()], default: []
   end
 
@@ -28,7 +31,7 @@ defmodule Parques.Core.Game do
   end
 
   @spec add_player(t(), Player.t()) :: t()
-  def add_player(%__MODULE__{players: players} = game, player)
+  def add_player(%__MODULE__{players: players, state: :created} = game, player)
       when length(players) < @max_players do
     player_with_color = Player.set_color(player, available_color(game))
 
