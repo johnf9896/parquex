@@ -18,3 +18,9 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   * Docs: https://hexdocs.pm/phoenix
   * Forum: https://elixirforum.com/c/phoenix-forum
   * Source: https://github.com/phoenixframework/phoenix
+
+## Copyright and License
+
+Copyright (c) 2022 Jhon Pedroza
+
+Source code is released under [the MIT license](./LICENSE.md).
