@@ -20,7 +20,7 @@ defmodule Parques.Core.Game do
     field :state, state(), default: :created
     field :players, %{Player.id() => Player.t()}, default: %{}
     field :color_map, %{Color.t() => Player.id()}, default: %{}
-    field :creator, Player.t(), enforce: false
+    field :creator_id, Player.id(), enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -53,6 +53,10 @@ defmodule Parques.Core.Game do
     |> Enum.reject(&is_nil/1)
   end
 
+  @spec creator(t()) :: Player.t() | nil
+  def creator(%__MODULE__{creator_id: nil}), do: nil
+  def creator(%__MODULE__{} = game), do: Map.fetch!(game.players, game.creator_id)
+
   @spec add_player(t(), Player.t()) :: t()
   def add_player(game, player) when is_game_player(game, player), do: game
 
@@ -63,8 +67,8 @@ defmodule Parques.Core.Game do
 
     new_players = Map.put(players, player.id, player_with_color)
     new_color_map = Map.put(game.color_map, color_chosen, player.id)
-    creator = game.creator || player_with_color
-    %__MODULE__{game | players: new_players, color_map: new_color_map, creator: creator}
+    creator_id = game.creator_id || player.id
+    %__MODULE__{game | players: new_players, color_map: new_color_map, creator_id: creator_id}
   end
 
   @spec available_color(t()) :: Color.t()
@@ -79,18 +83,18 @@ defmodule Parques.Core.Game do
     {player, new_players} = Map.pop!(players, player.id)
     new_color_map = Map.delete(game.color_map, player.color)
 
-    creator =
+    creator_id =
       case game do
-        %{creator: %{id: creator_id}} when creator_id == player.id ->
+        %{creator_id: creator_id} when creator_id == player.id ->
           new_players
-          |> Map.values()
+          |> Map.keys()
           |> List.first()
 
-        %{creator: creator} ->
-          creator
+        %{creator_id: creator_id} ->
+          creator_id
       end
 
-    %__MODULE__{game | players: new_players, color_map: new_color_map, creator: creator}
+    %__MODULE__{game | players: new_players, color_map: new_color_map, creator_id: creator_id}
   end
 
   def remove_player(%__MODULE__{} = game, _player), do: game

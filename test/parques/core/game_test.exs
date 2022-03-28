@@ -22,7 +22,7 @@ defmodule Parques.Core.GameTest do
       refute is_nil(game.id)
       assert is_binary(game.name)
       assert game.players == %{}
-      assert is_nil(game.creator)
+      assert is_nil(game.creator_id)
     end
   end
 
@@ -64,6 +64,24 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "creator/1" do
+    setup [:game]
+
+    test "returns nil when the game is empty", %{game: game} do
+      assert is_nil(game.creator_id)
+      assert is_nil(Game.creator(game))
+    end
+
+    test "returns the player when the game is not empty", %{game: game} do
+      game = with_players(game, Enum.random(1..Game.max_players()))
+      refute is_nil(game.creator_id)
+
+      creator = Game.creator(game)
+      assert Game.is_game_player(game, creator)
+      assert creator.id == game.creator_id
+    end
+  end
+
   describe "add_player/2" do
     setup [:game, :player]
 
@@ -101,20 +119,20 @@ defmodule Parques.Core.GameTest do
     end
 
     test "creator is set when the first player is added", %{game: game, player: player} do
-      assert is_nil(game.creator)
+      assert is_nil(game.creator_id)
       assert game.players == %{}
 
       game = Game.add_player(game, player)
-      assert game.creator.id == player.id
+      assert game.creator_id == player.id
     end
 
     test "creator is kept when another player is added", %{game: game, player: player} do
       game = with_players(game, 1)
-      creator = game.creator
-      refute is_nil(creator)
+      creator_id = game.creator_id
+      refute is_nil(creator_id)
 
       game = Game.add_player(game, player)
-      assert game.creator == creator
+      assert game.creator_id == creator_id
     end
   end
 
@@ -154,20 +172,21 @@ defmodule Parques.Core.GameTest do
     end
 
     test "creator rights are passed when current creator leaves", %{game: game} do
-      creator = game.creator
+      creator_id = game.creator_id
 
-      game = Game.remove_player(game, creator)
+      game = Game.remove_player(game, Game.creator(game))
 
-      refute is_nil(game.creator)
-      assert game.creator.id != creator.id
+      refute is_nil(game.creator_id)
+      assert game.creator_id != creator_id
+      assert Map.has_key?(game.players, game.creator_id)
     end
 
     test "creator is unset when last player leaves" do
       game = build(:game) |> with_players(1)
 
-      game = Game.remove_player(game, game.creator)
+      game = Game.remove_player(game, Game.creator(game))
       assert game.players == %{}
-      assert is_nil(game.creator)
+      assert is_nil(game.creator_id)
     end
   end
 
