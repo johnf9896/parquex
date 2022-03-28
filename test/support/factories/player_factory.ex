@@ -6,6 +6,7 @@ defmodule Parques.Factory.PlayerFactory do
     quote do
       def player_factory do
         %Player{
+          id: UUID.uuid4(),
           name: sequence(:player_name, &"John Doe #{&1}")
         }
       end

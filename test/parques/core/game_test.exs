@@ -17,6 +17,7 @@ defmodule Parques.Core.GameTest do
     test "creates a game" do
       %Game{} = game = Game.new()
 
+      refute is_nil(game.id)
       assert is_binary(game.name)
       assert game.players == []
     end

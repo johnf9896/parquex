@@ -9,6 +9,7 @@ defmodule Parques.Core.PlayerTest do
     test "creates a player" do
       %Player{} = player = Player.new(name: "John")
 
+      refute is_nil(player.id)
       assert player.name == "John"
     end
   end

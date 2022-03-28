@@ -9,9 +9,11 @@ defmodule Parques.Core.Game do
 
   @max_players Color.count()
 
+  @type id :: String.t()
   @type state :: :created | :playing | :finished
 
   typedstruct enforce: true do
+    field :id, id()
     field :name, String.t(), default: "New game"
     field :state, state(), default: :created
     field :players, [Player.t()], default: []
@@ -22,6 +24,11 @@ defmodule Parques.Core.Game do
 
   @spec new(Enum.t()) :: t()
   def new(fields \\ []) do
+    fields =
+      fields
+      |> Map.new()
+      |> Map.put_new_lazy(:id, &UUID.uuid4/0)
+
     struct!(__MODULE__, fields)
   end
 

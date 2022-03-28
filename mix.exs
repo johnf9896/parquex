@@ -53,6 +53,7 @@ defmodule Parques.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:typed_struct, "~> 0.3.0", override: true},
+      {:elixir_uuid, "~> 1.2"},
       # Testing
       {:floki, ">= 0.30.0", only: :test},
       {:ex_machina, "~> 2.7.0", only: :test},

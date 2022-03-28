@@ -8,13 +8,21 @@ defmodule Parques.Core.Player do
 
   alias Parques.Core.Color
 
-  typedstruct do
-    field :name, String.t(), enforce: true
-    field :color, Color.t()
+  @type id :: String.t()
+
+  typedstruct enforce: true do
+    field :id, id()
+    field :name, String.t()
+    field :color, Color.t(), enforce: false
   end
 
   @spec new(Enum.t()) :: t()
   def new(fields) do
+    fields =
+      fields
+      |> Map.new()
+      |> Map.put_new_lazy(:id, &UUID.uuid4/0)
+
     struct!(__MODULE__, fields)
   end
 
