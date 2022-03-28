@@ -62,7 +62,38 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "remove_player/2" do
+    setup [:game, :full_of_players]
+
+    test "removes a player", %{game: game} do
+      player_to_remove = Enum.random(game.players)
+
+      game = Game.remove_player(game, player_to_remove)
+
+      assert length(game.players) == Game.max_players() - 1
+
+      for player <- game.players do
+        assert player.id != player_to_remove.id
+      end
+    end
+
+    test "can remove all players in any order", %{game: game} do
+      players_to_remove = Enum.shuffle(game.players)
+
+      game =
+        Enum.reduce(players_to_remove, game, fn player, game ->
+          Game.remove_player(game, player)
+        end)
+
+      assert game.players == []
+    end
+  end
+
   defp game(_context) do
     {:ok, game: build(:game)}
+  end
+
+  defp full_of_players(%{game: game}) do
+    {:ok, game: with_players(game)}
   end
 end

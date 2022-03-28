@@ -51,4 +51,11 @@ defmodule Parques.Core.Game do
 
   @spec taken_colors(t()) :: [Color.t()]
   defp taken_colors(%{players: players}), do: Enum.map(players, & &1.color)
+
+  @spec remove_player(t(), Player.t()) :: t()
+  def remove_player(%__MODULE__{players: players} = game, player) do
+    new_players = Enum.reject(players, &(&1.id == player.id))
+
+    %__MODULE__{game | players: new_players}
+  end
 end
