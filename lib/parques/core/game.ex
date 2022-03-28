@@ -17,6 +17,7 @@ defmodule Parques.Core.Game do
     field :name, String.t(), default: "New game"
     field :state, state(), default: :created
     field :players, [Player.t()], default: []
+    field :creator, Player.t(), enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -43,7 +44,8 @@ defmodule Parques.Core.Game do
     player_with_color = Player.set_color(player, available_color(game))
 
     new_players = players ++ [player_with_color]
-    %__MODULE__{game | players: new_players}
+    creator = game.creator || hd(new_players)
+    %__MODULE__{game | players: new_players, creator: creator}
   end
 
   @spec available_color(t()) :: Color.t()
@@ -56,6 +58,15 @@ defmodule Parques.Core.Game do
   def remove_player(%__MODULE__{players: players} = game, player) do
     new_players = Enum.reject(players, &(&1.id == player.id))
 
-    %__MODULE__{game | players: new_players}
+    creator =
+      case game do
+        %{creator: %{id: creator_id}} when creator_id == player.id ->
+          List.first(new_players)
+
+        %{creator: creator} ->
+          creator
+      end
+
+    %__MODULE__{game | players: new_players, creator: creator}
   end
 end

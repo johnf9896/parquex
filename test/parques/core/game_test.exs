@@ -20,6 +20,7 @@ defmodule Parques.Core.GameTest do
       refute is_nil(game.id)
       assert is_binary(game.name)
       assert game.players == []
+      assert is_nil(game.creator)
     end
   end
 
@@ -35,10 +36,9 @@ defmodule Parques.Core.GameTest do
   end
 
   describe "add_player/2" do
-    setup [:game]
+    setup [:game, :player]
 
-    test "adds a player", %{game: game} do
-      player = build(:player)
+    test "adds a player", %{game: game, player: player} do
       game = Game.add_player(game, player)
 
       assert [added_player] = game.players
@@ -59,6 +59,23 @@ defmodule Parques.Core.GameTest do
 
       # Color are assigned in the same order as the list
       assert Enum.map(game.players, & &1.color) == Color.list()
+    end
+
+    test "creator is set when the first player is added", %{game: game, player: player} do
+      assert is_nil(game.creator)
+      assert game.players == []
+
+      game = Game.add_player(game, player)
+      assert game.creator.id == player.id
+    end
+
+    test "creator is kept when another player is added", %{game: game, player: player} do
+      game = with_players(game, 1)
+      creator = game.creator
+      refute is_nil(creator)
+
+      game = Game.add_player(game, player)
+      assert game.creator == creator
     end
   end
 
@@ -87,6 +104,23 @@ defmodule Parques.Core.GameTest do
 
       assert game.players == []
     end
+
+    test "creator rights are passed when current creator leaves", %{game: game} do
+      creator = game.creator
+
+      game = Game.remove_player(game, creator)
+
+      refute is_nil(game.creator)
+      assert game.creator.id != creator.id
+    end
+
+    test "creator is unset when last player leaves" do
+      game = build(:game) |> with_players(1)
+
+      game = Game.remove_player(game, game.creator)
+      assert game.players == []
+      assert is_nil(game.creator)
+    end
   end
 
   defp game(_context) do
@@ -95,5 +129,9 @@ defmodule Parques.Core.GameTest do
 
   defp full_of_players(%{game: game}) do
     {:ok, game: with_players(game)}
+  end
+
+  defp player(_context) do
+    {:ok, player: build(:player)}
   end
 end
