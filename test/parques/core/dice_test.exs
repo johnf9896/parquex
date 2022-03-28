@@ -25,7 +25,7 @@ defmodule Parques.Core.DiceTest do
 
   describe "all_equal?/1" do
     test "returns true when all rolls are the same" do
-      rolls = List.duplicate(a_roll(), :rand.uniform(4))
+      rolls = List.duplicate(a_roll(), Enum.random(2..4))
 
       assert Dice.all_equal?(rolls) == true
     end
