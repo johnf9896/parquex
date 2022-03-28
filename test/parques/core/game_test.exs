@@ -123,6 +123,32 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "set_player_color/3" do
+    setup [:game]
+
+    test "allows changing to an available color", %{game: game} do
+      %{players: [player]} = game = with_players(game, 1)
+
+      another_color = Enum.random(Color.list() -- [player.color])
+
+      %{players: [player]} = Game.set_player_color(game, player, another_color)
+
+      assert player.color == another_color
+    end
+
+    test "allows changing to a taken color (swap)", %{game: game} do
+      game = with_players(game)
+      [player1, player2] = game.players |> Enum.shuffle() |> Enum.take(2)
+
+      game = Game.set_player_color(game, player1, player2.color)
+      new_player1 = get_player(game, player1)
+      new_player2 = get_player(game, player2)
+
+      assert new_player1.color == player2.color
+      assert new_player2.color == player1.color
+    end
+  end
+
   defp game(_context) do
     {:ok, game: build(:game)}
   end
@@ -133,5 +159,9 @@ defmodule Parques.Core.GameTest do
 
   defp player(_context) do
     {:ok, player: build(:player)}
+  end
+
+  defp get_player(game, player) do
+    Enum.find(game.players, &(&1.id == player.id))
   end
 end

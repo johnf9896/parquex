@@ -4,6 +4,8 @@ defmodule Parques.Core.Game do
   """
   use TypedStruct
 
+  import Parques.Core.Color, only: [is_color: 1]
+
   alias Parques.Core.Color
   alias Parques.Core.Player
 
@@ -68,5 +70,40 @@ defmodule Parques.Core.Game do
       end
 
     %__MODULE__{game | players: new_players, creator: creator}
+  end
+
+  @spec set_player_color(t(), Player.t(), Color.t()) :: t()
+  def set_player_color(game, player, color) when is_color(color) do
+    case find_player_by_color(game, color) do
+      nil ->
+        game
+        |> update_player(Player.set_color(player, color))
+
+      another_player ->
+        player_color = player.color
+
+        game
+        |> update_player(Player.set_color(player, color))
+        |> update_player(Player.set_color(another_player, player_color))
+    end
+  end
+
+  @spec find_player_by_color(t(), Color.t()) :: Player.t() | nil
+  defp find_player_by_color(game, color) do
+    Enum.find(game.players, &(&1.color == color))
+  end
+
+  @spec update_player(t(), Player.t()) :: t()
+  defp update_player(game, updated_player) do
+    new_players =
+      Enum.map(game.players, fn player ->
+        if player.id == updated_player.id do
+          updated_player
+        else
+          player
+        end
+      end)
+
+    %__MODULE__{game | players: new_players}
   end
 end
