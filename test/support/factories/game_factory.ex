@@ -6,8 +6,7 @@ defmodule Parques.Factory.GameFactory do
     quote do
       def game_factory do
         %Game{
-          id: UUID.uuid4(),
-          players: []
+          id: UUID.uuid4()
         }
       end
 

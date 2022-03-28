@@ -18,7 +18,8 @@ defmodule Parques.Core.Game do
     field :id, id()
     field :name, String.t(), default: "New game"
     field :state, state(), default: :created
-    field :players, [Player.t()], default: []
+    field :players, %{Player.id() => Player.t()}, default: %{}
+    field :color_map, %{Color.t() => Player.id()}, default: %{}
     field :creator, Player.t(), enforce: false
   end
 
@@ -40,37 +41,59 @@ defmodule Parques.Core.Game do
     %__MODULE__{game | name: new_name}
   end
 
-  @spec add_player(t(), Player.t()) :: t()
-  def add_player(%__MODULE__{players: players, state: :created} = game, player)
-      when length(players) < @max_players do
-    player_with_color = Player.set_color(player, available_color(game))
+  defguard is_game_player(game, player) when is_map_key(game.players, player.id)
 
-    new_players = players ++ [player_with_color]
-    creator = game.creator || hd(new_players)
-    %__MODULE__{game | players: new_players, creator: creator}
+  @spec players(t()) :: [Player.t()]
+  def players(%__MODULE__{players: players, color_map: color_map}) do
+    Color.list()
+    |> Enum.map(fn color ->
+      player_id = color_map[color]
+      players[player_id]
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  @spec add_player(t(), Player.t()) :: t()
+  def add_player(game, player) when is_game_player(game, player), do: game
+
+  def add_player(%__MODULE__{players: players, state: :created} = game, player)
+      when map_size(players) < @max_players do
+    color_chosen = available_color(game)
+    player_with_color = Player.set_color(player, color_chosen)
+
+    new_players = Map.put(players, player.id, player_with_color)
+    new_color_map = Map.put(game.color_map, color_chosen, player.id)
+    creator = game.creator || player_with_color
+    %__MODULE__{game | players: new_players, color_map: new_color_map, creator: creator}
   end
 
   @spec available_color(t()) :: Color.t()
-  defp available_color(game), do: Color.available(taken_colors(game))
+  defp available_color(game), do: Color.available(colors_taken(game))
 
-  @spec taken_colors(t()) :: [Color.t()]
-  defp taken_colors(%{players: players}), do: Enum.map(players, & &1.color)
+  @spec colors_taken(t()) :: [Color.t()]
+  defp colors_taken(%{color_map: color_map}), do: Map.keys(color_map)
 
   @spec remove_player(t(), Player.t()) :: t()
-  def remove_player(%__MODULE__{players: players} = game, player) do
-    new_players = Enum.reject(players, &(&1.id == player.id))
+  def remove_player(%__MODULE__{players: players} = game, player)
+      when is_game_player(game, player) do
+    {player, new_players} = Map.pop!(players, player.id)
+    new_color_map = Map.delete(game.color_map, player.color)
 
     creator =
       case game do
         %{creator: %{id: creator_id}} when creator_id == player.id ->
-          List.first(new_players)
+          new_players
+          |> Map.values()
+          |> List.first()
 
         %{creator: creator} ->
           creator
       end
 
-    %__MODULE__{game | players: new_players, creator: creator}
+    %__MODULE__{game | players: new_players, color_map: new_color_map, creator: creator}
   end
+
+  def remove_player(%__MODULE__{} = game, _player), do: game
 
   @spec set_player_color(t(), Player.t(), Color.t()) :: t()
   def set_player_color(game, player, color) when is_color(color) do
@@ -78,32 +101,37 @@ defmodule Parques.Core.Game do
       nil ->
         game
         |> update_player(Player.set_color(player, color))
+        |> update_color_map()
 
       another_player ->
-        player_color = player.color
+        player_color = game.players[player.id].color
 
         game
         |> update_player(Player.set_color(player, color))
         |> update_player(Player.set_color(another_player, player_color))
+        |> update_color_map()
     end
   end
 
   @spec find_player_by_color(t(), Color.t()) :: Player.t() | nil
   defp find_player_by_color(game, color) do
-    Enum.find(game.players, &(&1.color == color))
+    game.players[game.color_map[color]]
   end
 
   @spec update_player(t(), Player.t()) :: t()
   defp update_player(game, updated_player) do
-    new_players =
-      Enum.map(game.players, fn player ->
-        if player.id == updated_player.id do
-          updated_player
-        else
-          player
-        end
-      end)
+    new_players = %{game.players | updated_player.id => updated_player}
 
     %__MODULE__{game | players: new_players}
+  end
+
+  @spec update_color_map(t()) :: t()
+  defp update_color_map(%__MODULE__{players: players} = game) do
+    new_color_map =
+      Enum.reduce(players, %{}, fn {_id, player}, color_map ->
+        Map.put(color_map, player.color, player.id)
+      end)
+
+    %__MODULE__{game | color_map: new_color_map}
   end
 end
