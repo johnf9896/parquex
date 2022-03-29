@@ -68,5 +68,26 @@ defmodule Parques.Core.ColorTest do
     end
   end
 
+  describe "next/2" do
+    test "chooses the other when there are two colors" do
+      colors = Color.list() |> Enum.shuffle() |> Enum.take(2)
+      [first_color, second_color] = colors
+
+      assert Color.next(colors, first_color) == second_color
+      assert Color.next(colors, second_color) == first_color
+    end
+
+    test "every color in the list gives the next" do
+      colors = Color.list() -- [some_color()]
+      num_colors = length(colors)
+
+      for {color, index} <- Enum.with_index(colors) do
+        next_index = index + 1 - num_colors
+        next_color = Enum.at(colors, next_index)
+        assert Color.next(colors, color) == next_color
+      end
+    end
+  end
+
   defp some_color, do: Enum.random(Color.list())
 end

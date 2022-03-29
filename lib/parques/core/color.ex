@@ -24,4 +24,14 @@ defmodule Parques.Core.Color do
     List.first(@colors -- taken)
   end
 
+  @spec next([t()], t()) :: t()
+  def next(colors, current) when is_color(current) do
+    num_colors = length(colors)
+    ordered_colors = Enum.filter(list(), &(&1 in colors))
+    ^num_colors = length(ordered_colors)
+
+    index = Enum.find_index(ordered_colors, &(&1 == current))
+    next_index = rem(index + 1, num_colors)
+    Enum.at(ordered_colors, next_index)
+  end
 end
