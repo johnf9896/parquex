@@ -10,9 +10,10 @@ defmodule Parques.Core.Game do
   alias Parques.Core.Player
 
   @max_players Color.count()
+  @min_players 2
 
   @type id :: String.t()
-  @type state :: :created | :playing | :finished
+  @type state :: :created | :initial_rolling | :playing | :finished
 
   typedstruct enforce: true do
     field :id, id()
@@ -21,6 +22,7 @@ defmodule Parques.Core.Game do
     field :players, %{Player.id() => Player.t()}, default: %{}
     field :color_map, %{Color.t() => Player.id()}, default: %{}
     field :creator_id, Player.id(), enforce: false
+    field :current_player_id, Player.id(), enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -137,5 +139,12 @@ defmodule Parques.Core.Game do
       end)
 
     %__MODULE__{game | color_map: new_color_map}
+  end
+
+  @spec start(t()) :: t()
+  def start(%__MODULE__{state: :created, players: players} = game)
+      when map_size(players) >= @min_players do
+    first_player = game |> players() |> hd()
+    %__MODULE__{game | state: :initial_rolling, current_player_id: first_player.id}
   end
 end

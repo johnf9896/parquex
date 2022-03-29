@@ -226,6 +226,18 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "start/1" do
+    setup [:game, :full_of_players]
+
+    test "starts the initial rolling phase", %{game: game} do
+      game = Game.start(game)
+      first_player = hd(Game.players(game))
+
+      assert game.state == :initial_rolling
+      assert game.current_player_id == first_player.id
+    end
+  end
+
   defp game(_context) do
     {:ok, game: build(:game)}
   end
