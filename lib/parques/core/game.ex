@@ -12,6 +12,7 @@ defmodule Parques.Core.Game do
 
   @max_players Color.count()
   @min_players 2
+  @max_dice 2
 
   @type id :: String.t()
   @type state :: :created | :initial_rolling | :playing | :finished
@@ -164,5 +165,34 @@ defmodule Parques.Core.Game do
     current_color = players[game.current_player_id].color
     next_color = Color.next(colors_taken(game), current_color)
     game.color_map[next_color]
+  end
+
+  @spec roll(t()) :: t()
+  def roll(%__MODULE__{state: :initial_rolling} = game) do
+    game
+    |> do_roll_dice()
+    |> set_initial_roll()
+    |> move_to_next_player()
+  end
+
+  @spec do_roll_dice(t()) :: t()
+  defp do_roll_dice(game) do
+    roll = Dice.roll(num_dice(game))
+
+    %__MODULE__{game | last_roll: roll}
+  end
+
+  @spec num_dice(t()) :: pos_integer()
+  defp num_dice(%__MODULE__{state: :initial_rolling}), do: @max_dice
+
+  @spec set_initial_roll(t()) :: t()
+  defp set_initial_roll(%__MODULE__{last_roll: last_roll} = game) do
+    new_initial_rolls = Map.put(game.initial_rolls, game.current_player_id, last_roll)
+    %__MODULE__{game | initial_rolls: new_initial_rolls}
+  end
+
+  @spec move_to_next_player(t()) :: t()
+  defp move_to_next_player(%__MODULE__{} = game) do
+    %__MODULE__{game | current_player_id: next_player_id(game)}
   end
 end

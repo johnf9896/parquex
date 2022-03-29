@@ -20,4 +20,8 @@ defmodule Parques.Core.Dice do
   @spec all_equal?(roll()) :: boolean()
   def all_equal?([_]), do: false
   def all_equal?([_ | _] = roll), do: Enum.all?(roll, &(&1 == hd(roll)))
+
+  @spec is_roll(term()) :: boolean()
+  def is_roll([_ | _] = roll), do: Enum.all?(roll, &(&1 in 1..@num_sides))
+  def is_roll(_other), do: false
 end

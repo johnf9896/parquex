@@ -19,6 +19,8 @@ defmodule Parques.Core.DiceTest do
         for roll <- roll do
           assert roll in 1..Dice.num_sides()
         end
+
+        assert Dice.is_roll(roll)
       end
     end
   end
@@ -37,6 +39,14 @@ defmodule Parques.Core.DiceTest do
     test "returns false when rolls are different" do
       for roll <- [[1, 5], [1, 5, 5], [1, 1, 5]] do
         assert Dice.all_equal?(roll) == false
+      end
+    end
+  end
+
+  describe "is_roll/1" do
+    for {roll, is_roll} <- [{[1, 2], true}, {[1], true}, {[], false}, {5, false}] do
+      test "with #{inspect(roll)} returns #{is_roll}" do
+        assert Dice.is_roll(unquote(roll)) == unquote(is_roll)
       end
     end
   end

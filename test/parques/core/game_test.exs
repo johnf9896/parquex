@@ -7,6 +7,7 @@ defmodule Parques.Core.GameTest do
   require Parques.Core.Game
 
   alias Parques.Core.Color
+  alias Parques.Core.Dice
   alias Parques.Core.Game
 
   describe "max_players/0" do
@@ -261,6 +262,34 @@ defmodule Parques.Core.GameTest do
       game = %{game | current_player_id: current_player_id}
 
       assert Game.next_player_id(game) == next_player_id
+    end
+  end
+
+  describe "roll/1" do
+    setup [:started_game]
+
+    test "the first player rolls during initial rolling", %{game: game} do
+      game = Game.roll(game)
+      [first_player, second_player | _] = Game.players(game)
+
+      assert Dice.is_roll(game.last_roll)
+      assert Dice.is_roll(game.initial_rolls[first_player.id])
+      assert game.current_player_id == second_player.id
+    end
+
+    test "every player can roll once", %{game: game} do
+      player_ids = Map.keys(game.players)
+
+      game =
+        Enum.reduce(player_ids, game, fn _player_id, game ->
+          Game.roll(game)
+        end)
+
+      assert map_size(game.initial_rolls) == length(player_ids)
+
+      for player_id <- player_ids do
+        assert Dice.is_roll(game.initial_rolls[player_id])
+      end
     end
   end
 
