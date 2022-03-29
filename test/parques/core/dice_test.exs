@@ -13,10 +13,10 @@ defmodule Parques.Core.DiceTest do
   describe "roll/1" do
     test "rolls the given number of dice" do
       for num_dice <- 1..3 do
-        rolls = Dice.roll(num_dice)
-        assert length(rolls) == num_dice
+        roll = Dice.roll(num_dice)
+        assert length(roll) == num_dice
 
-        for roll <- rolls do
+        for roll <- roll do
           assert roll in 1..Dice.num_sides()
         end
       end
@@ -25,9 +25,9 @@ defmodule Parques.Core.DiceTest do
 
   describe "all_equal?/1" do
     test "returns true when all rolls are the same" do
-      rolls = List.duplicate(a_roll(), Enum.random(2..4))
+      roll = List.duplicate(a_roll(), Enum.random(2..4))
 
-      assert Dice.all_equal?(rolls) == true
+      assert Dice.all_equal?(roll) == true
     end
 
     test "returns false when there is only one roll" do
@@ -35,8 +35,8 @@ defmodule Parques.Core.DiceTest do
     end
 
     test "returns false when rolls are different" do
-      for rolls <- [[1, 5], [1, 5, 5], [1, 1, 5]] do
-        assert Dice.all_equal?(rolls) == false
+      for roll <- [[1, 5], [1, 5, 5], [1, 1, 5]] do
+        assert Dice.all_equal?(roll) == false
       end
     end
   end
