@@ -235,6 +235,8 @@ defmodule Parques.Core.GameTest do
 
       assert game.state == :initial_rolling
       assert game.current_player_id == first_player.id
+      assert game.initial_rolls == %{}
+      assert is_nil(game.last_roll)
     end
   end
 

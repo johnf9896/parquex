@@ -7,6 +7,7 @@ defmodule Parques.Core.Game do
   import Parques.Core.Color, only: [is_color: 1]
 
   alias Parques.Core.Color
+  alias Parques.Core.Dice
   alias Parques.Core.Player
 
   @max_players Color.count()
@@ -23,6 +24,8 @@ defmodule Parques.Core.Game do
     field :color_map, %{Color.t() => Player.id()}, default: %{}
     field :creator_id, Player.id(), enforce: false
     field :current_player_id, Player.id(), enforce: false
+    field :initial_rolls, %{Player.id() => Dice.roll()}, enforce: false
+    field :last_roll, Dice.roll(), enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -145,6 +148,13 @@ defmodule Parques.Core.Game do
   def start(%__MODULE__{state: :created, players: players} = game)
       when map_size(players) >= @min_players do
     first_player = game |> players() |> hd()
-    %__MODULE__{game | state: :initial_rolling, current_player_id: first_player.id}
+
+    %__MODULE__{
+      game
+      | state: :initial_rolling,
+        current_player_id: first_player.id,
+        initial_rolls: %{},
+        last_roll: nil
+    }
   end
 end
