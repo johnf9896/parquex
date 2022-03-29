@@ -8,6 +8,8 @@ defmodule Parques.Core.Color do
 
   @type t :: :red | :green | :blue | :yellow
 
+  defguard is_color(term) when term in @colors
+
   @spec count :: pos_integer()
   def count, do: @count
 
@@ -22,5 +24,4 @@ defmodule Parques.Core.Color do
     List.first(@colors -- taken)
   end
 
-  defguard is_color(term) when term in @colors
 end

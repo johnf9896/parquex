@@ -6,6 +6,18 @@ defmodule Parques.Core.ColorTest do
 
   alias Parques.Core.Color
 
+  describe "is_color/1" do
+    test "returns true for a color" do
+      color = some_color()
+
+      assert Color.is_color(color) == true
+    end
+
+    test "return false for something else" do
+      assert Color.is_color(nil) == false
+    end
+  end
+
   describe "count/0" do
     test "returns the number of colors" do
       assert Color.count() == 4
@@ -53,18 +65,6 @@ defmodule Parques.Core.ColorTest do
         end
 
       assert MapSet.new(returned_colors) == MapSet.new(Color.list())
-    end
-  end
-
-  describe "is_color/1" do
-    test "returns true for a color" do
-      color = some_color()
-
-      assert Color.is_color(color) == true
-    end
-
-    test "return false for something else" do
-      assert Color.is_color(nil) == false
     end
   end
 
