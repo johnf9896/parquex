@@ -157,4 +157,12 @@ defmodule Parques.Core.Game do
         last_roll: nil
     }
   end
+
+  @spec next_player_id(t()) :: Player.id()
+  def next_player_id(%__MODULE__{state: state, players: players} = game)
+      when state in [:initial_rolling, :playing] do
+    current_color = players[game.current_player_id].color
+    next_color = Color.next(colors_taken(game), current_color)
+    game.color_map[next_color]
+  end
 end

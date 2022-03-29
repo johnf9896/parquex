@@ -240,6 +240,30 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "next_player_id/1" do
+    setup [:started_game]
+
+    test "returns the second player when the first is current", %{game: game} do
+      [first_player, second_player | _] = Game.players(game)
+      assert game.current_player_id == first_player.id
+      assert Game.next_player_id(game) == second_player.id
+    end
+
+    test "returns the next player", %{game: game} do
+      players = Game.players(game)
+
+      index = :rand.uniform(length(players)) - 1
+      next_index = rem(index + 1, length(players))
+
+      current_player_id = Enum.at(players, index).id
+      next_player_id = Enum.at(players, next_index).id
+
+      game = %{game | current_player_id: current_player_id}
+
+      assert Game.next_player_id(game) == next_player_id
+    end
+  end
+
   defp game(_context) do
     {:ok, game: build(:game)}
   end
@@ -250,6 +274,12 @@ defmodule Parques.Core.GameTest do
 
   defp player(_context) do
     {:ok, player: build(:player)}
+  end
+
+  defp started_game(_context) do
+    game = :game |> build() |> with_players() |> game_start()
+
+    {:ok, game: game}
   end
 
   defp get_player(game, player), do: game.players[player.id]

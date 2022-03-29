@@ -17,6 +17,10 @@ defmodule Parques.Factory.GameFactory do
           Game.add_player(game, player)
         end)
       end
+
+      def game_start(game) do
+        Game.start(game)
+      end
     end
   end
 end
