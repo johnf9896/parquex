@@ -70,7 +70,7 @@ defmodule Parques.Core.ColorTest do
 
   describe "next/2" do
     test "chooses the other when there are two colors" do
-      colors = Color.list() |> Enum.shuffle() |> Enum.take(2)
+      colors = Color.list() |> Enum.take_random(2)
       [first_color, second_color] = colors
 
       assert Color.next(colors, first_color) == second_color

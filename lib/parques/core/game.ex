@@ -27,6 +27,7 @@ defmodule Parques.Core.Game do
     field :current_player_id, Player.id(), enforce: false
     field :initial_rolls, %{Player.id() => Dice.roll()}, enforce: false
     field :last_roll, Dice.roll(), enforce: false
+    field :rollers, [Player.id()], enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -155,7 +156,8 @@ defmodule Parques.Core.Game do
       | state: :initial_rolling,
         current_player_id: first_player.id,
         initial_rolls: %{},
-        last_roll: nil
+        last_roll: nil,
+        rollers: Map.keys(players)
     }
   end
 
@@ -163,7 +165,13 @@ defmodule Parques.Core.Game do
   def next_player_id(%__MODULE__{state: state, players: players} = game)
       when state in [:initial_rolling, :playing] do
     current_color = players[game.current_player_id].color
-    next_color = Color.next(colors_taken(game), current_color)
+
+    colors_taken =
+      game.players
+      |> Enum.filter(fn {id, _} -> id in game.rollers end)
+      |> Enum.map(fn {_id, player} -> player.color end)
+
+    next_color = Color.next(colors_taken, current_color)
     game.color_map[next_color]
   end
 
@@ -172,7 +180,7 @@ defmodule Parques.Core.Game do
     game
     |> do_roll_dice()
     |> set_initial_roll()
-    |> move_to_next_player()
+    |> maybe_start_playing()
   end
 
   @spec do_roll_dice(t()) :: t()
@@ -189,6 +197,40 @@ defmodule Parques.Core.Game do
   defp set_initial_roll(%__MODULE__{last_roll: last_roll} = game) do
     new_initial_rolls = Map.put(game.initial_rolls, game.current_player_id, last_roll)
     %__MODULE__{game | initial_rolls: new_initial_rolls}
+  end
+
+  @spec maybe_start_playing(t()) :: t()
+  defp maybe_start_playing(%__MODULE__{initial_rolls: initial_rolls, rollers: rollers} = game)
+       when map_size(initial_rolls) == length(rollers) do
+    case highest_initial_rolls(game) do
+      [{first_player, _roll}] ->
+        %__MODULE__{
+          game
+          | state: :playing,
+            initial_rolls: nil,
+            rollers: Map.keys(game.players),
+            current_player_id: first_player
+        }
+
+      [{first_player, _roll} | _] = highest_rolls ->
+        rollers = Enum.map(highest_rolls, fn {player_id, _roll} -> player_id end)
+        %__MODULE__{game | rollers: rollers, initial_rolls: %{}, current_player_id: first_player}
+    end
+  end
+
+  defp maybe_start_playing(%__MODULE__{} = game) do
+    move_to_next_player(game)
+  end
+
+  @spec highest_initial_rolls(t()) :: [{Player.id(), Dice.roll()}]
+  defp highest_initial_rolls(%__MODULE__{initial_rolls: initial_rolls}) do
+    [{_, highest_roll} | _] =
+      sorted_rolls =
+      Enum.sort_by(initial_rolls, fn {_player_id, roll} -> Enum.sum(roll) end, &>=/2)
+
+    Enum.take_while(sorted_rolls, fn {_player_id, roll} ->
+      Enum.sum(roll) == Enum.sum(highest_roll)
+    end)
   end
 
   @spec move_to_next_player(t()) :: t()
