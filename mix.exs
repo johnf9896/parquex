@@ -57,6 +57,7 @@ defmodule Parques.MixProject do
       # Testing
       {:floki, ">= 0.30.0", only: :test},
       {:ex_machina, "~> 2.7.0", only: :test},
+      {:mimic, "~> 1.7", only: :test},
       # Development tools
       {:mix_test_interactive, "~> 1.0", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 1.2", only: :test},
