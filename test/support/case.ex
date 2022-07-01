@@ -11,7 +11,9 @@ defmodule Parques.Case do
     end
   end
 
-  setup _tags do
+  setup tags do
+    Mimic.set_mimic_from_context(tags)
+    Mimic.verify_on_exit!()
     :ok
   end
 end

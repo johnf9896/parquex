@@ -7,6 +7,7 @@ defmodule Parques.Core.GameTest do
   require Parques.Core.Game
 
   alias Parques.Core.Color
+  alias Parques.Core.Dice
   alias Parques.Core.Game
 
   describe "max_players/0" do
@@ -226,6 +227,125 @@ defmodule Parques.Core.GameTest do
     end
   end
 
+  describe "start/1" do
+    setup [:game, :full_of_players]
+
+    test "starts the initial rolling phase", %{game: game} do
+      game = Game.start(game)
+      first_player = hd(Game.players(game))
+
+      assert game.state == :initial_rolling
+      assert game.current_player_id == first_player.id
+      assert game.initial_rolls == %{}
+      assert is_nil(game.last_roll)
+      assert game.rollers == Map.keys(game.players)
+    end
+  end
+
+  describe "next_player_id/1" do
+    setup [:started_game]
+
+    test "returns the second player when the first is current", %{game: game} do
+      [first_player, second_player | _] = Game.players(game)
+      assert game.current_player_id == first_player.id
+      assert Game.next_player_id(game) == second_player.id
+    end
+
+    test "returns the next player", %{game: game} do
+      players = Game.players(game)
+
+      index = :rand.uniform(length(players)) - 1
+      next_index = rem(index + 1, length(players))
+
+      current_player_id = Enum.at(players, index).id
+      next_player_id = Enum.at(players, next_index).id
+
+      game = %{game | current_player_id: current_player_id}
+
+      assert Game.next_player_id(game) == next_player_id
+    end
+  end
+
+  describe "roll/1" do
+    setup [:started_game]
+
+    test "the first player rolls during initial rolling", %{game: game} do
+      game = Game.roll(game)
+      [first_player, second_player | _] = Game.players(game)
+
+      assert Dice.is_roll(game.last_roll)
+      assert Dice.is_roll(game.initial_rolls[first_player.id])
+      assert game.current_player_id == second_player.id
+    end
+
+    test "every player can roll once", %{game: game} do
+      player_ids = game |> Game.players() |> Enum.map(& &1.id)
+
+      Enum.reduce(player_ids, game, fn player_id, game ->
+        assert game.current_player_id == player_id
+        Game.roll(game)
+      end)
+    end
+
+    test "greatest roll gets first turn", %{game: game} do
+      assert map_size(game.players) == 4
+      {player, index} = game |> Game.players() |> Enum.with_index() |> Enum.random()
+
+      mock_rolls(List.insert_at([[1, 2], [2, 3], [3, 4]], index, [4, 5]))
+
+      game =
+        Enum.reduce(game.players, game, fn _, game ->
+          Game.roll(game)
+        end)
+
+      assert game.state == :playing
+      assert game.current_player_id == player.id
+    end
+
+    test "initial rolling is repeated until there is a greatest roll", %{game: game} do
+      Mimic.stub(Dice)
+
+      game =
+        for num_dups <- 4..1, reduce: game do
+          game ->
+            rollers = game.rollers
+            num_players = length(rollers)
+
+            (List.duplicate([2, 3], num_dups) ++ List.duplicate([1, 2], num_players - num_dups))
+            |> Enum.shuffle()
+            |> mock_rolls()
+
+            game =
+              Enum.reduce(game.rollers, game, fn _, game ->
+                assert game.current_player_id in rollers
+                Game.roll(game)
+              end)
+
+            case num_dups do
+              4 ->
+                assert game.rollers == rollers
+
+              1 ->
+                assert length(game.rollers) == 4
+
+              _ ->
+                assert length(game.rollers) == length(rollers) - 1
+            end
+
+            if num_dups > 1 do
+              assert game.state == :initial_rolling
+              assert game.initial_rolls == %{}
+            else
+              assert game.state == :playing
+            end
+
+            game
+        end
+
+      assert game.state == :playing
+    end
+  end
+
   defp game(_context) do
     {:ok, game: build(:game)}
   end
@@ -238,6 +358,12 @@ defmodule Parques.Core.GameTest do
     {:ok, player: build(:player)}
   end
 
+  defp started_game(_context) do
+    game = :game |> build() |> with_players() |> game_start()
+
+    {:ok, game: game}
+  end
+
   defp get_player(game, player), do: game.players[player.id]
 
   defp random_player(game) do
@@ -246,6 +372,15 @@ defmodule Parques.Core.GameTest do
   end
 
   defp random_players(game, count) do
-    game.players |> Map.values() |> Enum.shuffle() |> Enum.take(count)
+    game.players |> Map.values() |> Enum.take_random(count)
+  end
+
+  defp mock_rolls(rolls) do
+    for roll <- rolls do
+      Mimic.expect(Dice, :roll, fn num_dice ->
+        assert length(roll) == num_dice
+        roll
+      end)
+    end
   end
 end

@@ -6,6 +6,18 @@ defmodule Parques.Core.ColorTest do
 
   alias Parques.Core.Color
 
+  describe "is_color/1" do
+    test "returns true for a color" do
+      color = some_color()
+
+      assert Color.is_color(color) == true
+    end
+
+    test "return false for something else" do
+      assert Color.is_color(nil) == false
+    end
+  end
+
   describe "count/0" do
     test "returns the number of colors" do
       assert Color.count() == 4
@@ -56,15 +68,24 @@ defmodule Parques.Core.ColorTest do
     end
   end
 
-  describe "is_color/1" do
-    test "returns true for a color" do
-      color = some_color()
+  describe "next/2" do
+    test "chooses the other when there are two colors" do
+      colors = Color.list() |> Enum.take_random(2)
+      [first_color, second_color] = colors
 
-      assert Color.is_color(color) == true
+      assert Color.next(colors, first_color) == second_color
+      assert Color.next(colors, second_color) == first_color
     end
 
-    test "return false for something else" do
-      assert Color.is_color(nil) == false
+    test "every color in the list gives the next" do
+      colors = Color.list() -- [some_color()]
+      num_colors = length(colors)
+
+      for {color, index} <- Enum.with_index(colors) do
+        next_index = index + 1 - num_colors
+        next_color = Enum.at(colors, next_index)
+        assert Color.next(colors, color) == next_color
+      end
     end
   end
 

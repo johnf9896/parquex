@@ -7,12 +7,15 @@ defmodule Parques.Core.Game do
   import Parques.Core.Color, only: [is_color: 1]
 
   alias Parques.Core.Color
+  alias Parques.Core.Dice
   alias Parques.Core.Player
 
   @max_players Color.count()
+  @min_players 2
+  @max_dice 2
 
   @type id :: String.t()
-  @type state :: :created | :playing | :finished
+  @type state :: :created | :initial_rolling | :playing | :finished
 
   typedstruct enforce: true do
     field :id, id()
@@ -21,6 +24,10 @@ defmodule Parques.Core.Game do
     field :players, %{Player.id() => Player.t()}, default: %{}
     field :color_map, %{Color.t() => Player.id()}, default: %{}
     field :creator_id, Player.id(), enforce: false
+    field :current_player_id, Player.id(), enforce: false
+    field :initial_rolls, %{Player.id() => Dice.roll()}, enforce: false
+    field :last_roll, Dice.roll(), enforce: false
+    field :rollers, [Player.id()], enforce: false
   end
 
   @spec max_players :: pos_integer()
@@ -137,5 +144,98 @@ defmodule Parques.Core.Game do
       end)
 
     %__MODULE__{game | color_map: new_color_map}
+  end
+
+  @spec start(t()) :: t()
+  def start(%__MODULE__{state: :created, players: players} = game)
+      when map_size(players) >= @min_players do
+    first_player = game |> players() |> hd()
+
+    %__MODULE__{
+      game
+      | state: :initial_rolling,
+        current_player_id: first_player.id,
+        initial_rolls: %{},
+        last_roll: nil,
+        rollers: Map.keys(players)
+    }
+  end
+
+  @spec next_player_id(t()) :: Player.id()
+  def next_player_id(%__MODULE__{state: state, players: players} = game)
+      when state in [:initial_rolling, :playing] do
+    current_color = players[game.current_player_id].color
+
+    colors_taken =
+      game.players
+      |> Enum.filter(fn {id, _} -> id in game.rollers end)
+      |> Enum.map(fn {_id, player} -> player.color end)
+
+    next_color = Color.next(colors_taken, current_color)
+    game.color_map[next_color]
+  end
+
+  @spec roll(t()) :: t()
+  def roll(%__MODULE__{state: :initial_rolling} = game) do
+    game
+    |> do_roll_dice()
+    |> set_initial_roll()
+    # NOTE: Consider separating this to a separate call
+    |> maybe_start_playing()
+  end
+
+  @spec do_roll_dice(t()) :: t()
+  defp do_roll_dice(game) do
+    roll = Dice.roll(num_dice(game))
+
+    %__MODULE__{game | last_roll: roll}
+  end
+
+  @spec num_dice(t()) :: pos_integer()
+  defp num_dice(%__MODULE__{state: :initial_rolling}), do: @max_dice
+
+  @spec set_initial_roll(t()) :: t()
+  defp set_initial_roll(%__MODULE__{last_roll: last_roll} = game) do
+    new_initial_rolls = Map.put(game.initial_rolls, game.current_player_id, last_roll)
+    %__MODULE__{game | initial_rolls: new_initial_rolls}
+  end
+
+  @spec maybe_start_playing(t()) :: t()
+  defp maybe_start_playing(%__MODULE__{initial_rolls: initial_rolls, rollers: rollers} = game)
+       when map_size(initial_rolls) == length(rollers) do
+    case highest_initial_rolls(game) do
+      [{first_player, _roll}] ->
+        %__MODULE__{
+          game
+          | state: :playing,
+            initial_rolls: nil,
+            rollers: Map.keys(game.players),
+            current_player_id: first_player
+        }
+
+      [{first_player, _roll} | _] = highest_rolls ->
+        rollers = Enum.map(highest_rolls, fn {player_id, _roll} -> player_id end)
+        %__MODULE__{game | rollers: rollers, initial_rolls: %{}, current_player_id: first_player}
+    end
+  end
+
+  defp maybe_start_playing(%__MODULE__{} = game) do
+    move_to_next_player(game)
+  end
+
+  @spec highest_initial_rolls(t()) :: [{Player.id(), Dice.roll()}]
+  defp highest_initial_rolls(%__MODULE__{initial_rolls: initial_rolls}) do
+    [{_, highest_roll} | _] =
+      sorted_rolls =
+      Enum.sort_by(initial_rolls, fn {_player_id, roll} -> Enum.sum(roll) end, &>=/2)
+
+    Enum.take_while(sorted_rolls, fn {_player_id, roll} ->
+      Enum.sum(roll) == Enum.sum(highest_roll)
+    end)
+  end
+
+  @spec move_to_next_player(t()) :: t()
+  defp move_to_next_player(%__MODULE__{} = game) do
+    %__MODULE__{game | current_player_id: next_player_id(game)}
   end
 end
