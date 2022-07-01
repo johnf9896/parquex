@@ -180,6 +180,7 @@ defmodule Parques.Core.Game do
     game
     |> do_roll_dice()
     |> set_initial_roll()
+    # NOTE: Consider separating this to a separate call
     |> maybe_start_playing()
   end
 
